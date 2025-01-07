@@ -1,22 +1,37 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {Box, Button, TextField, Typography, useTheme} from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Add as AddIcon } from "@mui/icons-material";
 import React, { useState, useEffect } from "react";
 import { getAllCustomers, createCustomer } from "../../model/apiService";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import Header from "../../components/Header";
+import {DataGrid} from "@mui/x-data-grid";
+import {mockDataTeam} from "../../data/mockData";
+import {tokens} from "../../theme";
 
 const Clients = () => {
     const isNonMobile = useMediaQuery("(min-width:600px)");
     const [clients, setClients] = useState([]);
     const [openForm, setOpenForm] = useState(false);
+    const theme = useTheme();
+    const colors = tokens(theme.palette.mode);
 
     const fetchClients = async () => {
         try {
-            const data = await getAllCustomers();
-            console.log(data);
-            setClients(data);
-
+            const resp = await getAllCustomers();
+            const clientsWithId = resp.data.map((client, index) => ({
+                id: index, // Add an `id` field
+                ...client,
+            }));
+            console.log(resp);
+            console.log(resp.data);
+            console.log("with id", clientsWithId);
+            setClients(clientsWithId);
+            console.log("set it with id", clients);
         } catch (error) {
             console.error("Error fetching clients:", error);
         }
@@ -26,6 +41,9 @@ const Clients = () => {
         fetchClients(); // Fetch clients when the component loads
     }, []);
 
+    useEffect(() => {
+        console.log("Clients state updated:", clients);
+    }, [clients]);
     const handleFormSubmit = async (values, { resetForm }) => {
         try {
             const response = await createCustomer(values);
@@ -38,7 +56,30 @@ const Clients = () => {
             console.error("Error creating client:", error);
         }
     };
-
+    const columns = [
+        {
+            field: "firstName",
+            headerName: "First Name",
+            flex: 1,
+            cellClassName: "name-column--cell",
+        },
+        {
+            field: "lastName",
+            headerName: "Last Name",
+            flex: 1,
+            cellClassName: "name-column--cell",
+        },
+        {
+            field: "phoneNumber",
+            headerName: "Phone Number",
+            flex: 1,
+        },
+        {
+            field: "startDate",
+            headerName: "Start Date",
+            flex: 1,
+        },
+    ];
     return (
         <Box>
             <Typography variant="h4" mb={2}>
@@ -150,30 +191,37 @@ const Clients = () => {
                 </Formik>
             )}
 
-            <Box mt={4}>
-                <Typography variant="h6">Client List</Typography>
-                <Box>
-                    {clients.length > 0 ? (
-                        clients.map((client) => (
-                            <Box key={client.id} mb={2} p={2} border="1px solid #ccc">
-                                <Typography>
-                                    <strong>Name:</strong> {client.firstName} {client.lastName}
-                                </Typography>
-                                <Typography>
-                                    <strong>Phone:</strong> {client.phoneNumber}
-                                </Typography>
-                                <Typography>
-                                    <strong>Start Date:</strong> {client.startDate}
-                                </Typography>
-                            </Box>
-                        ))
-                    ) : (
-                        <Typography>No clients found.</Typography>
-                    )}
+            <Box m="20px">
+                <Header title="Our Customers" subtitle="Managing All Our Customers Effectively." />
+                <Box
+                    m="40px 0 0 0"
+                    height="60vh"
+                    sx={{
+                        "& .MuiDataGrid-root": {
+                            border: "none",
+                        },
+                        "& .MuiDataGrid-cell": {
+                            borderBottom: "none",
+                        },
+                        "& .name-column--cell": {
+                        },
+                        "& .MuiDataGrid-columnHeaders": {
+                            borderBottom: "none",
+                        },
+                        "& .MuiDataGrid-virtualScroller": {
+                        },
+                        "& .MuiDataGrid-footerContainer": {
+                            borderTop: "none",
+                        },
+                        "& .MuiCheckbox-root": {
+                            color: `${colors.greenAccent[200]} !important`,
+                        },
+                    }}
+                >
+                    <DataGrid checkboxSelection rows={clients} columns={columns}  />
                 </Box>
             </Box>
         </Box>
     );
 };
-
 export default Clients;

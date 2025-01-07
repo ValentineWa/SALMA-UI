@@ -79,4 +79,23 @@ export const createStaff = async (staffData) => {
         });
 };
 
+//Services
+export const getAllServices = async () => {
+    return fetchAPI("/services/getAllServices", {
+        method: "GET",
+        headers: {
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+    });
+};
+export const createServices = async (bookingData) => {
+    return fetchAPI("/services/createNew", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(bookingData),
+    });
+};
 

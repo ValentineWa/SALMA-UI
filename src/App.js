@@ -16,6 +16,13 @@ import FAQ from "./scenes/faq";
 import Geography from "./scenes/geography";
 import Calendar from "./scenes/calendar";
 
+import Clients from "./scenes/clients";
+import Appointments from "./scenes/appointments";
+import Staff from "./scenes/staff";
+import Services from "./scenes/services";
+// import Reminders from "./scenes/reminders";
+// import Finances from "./scenes/finances";
+// import Reports from "./scenes/reports";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -41,6 +48,14 @@ function App() {
                         <Route path="/line" element={<Line Chart />} />
                         <Route path="/geography" element={<Geography />} />
                         <Route path="/calendar" element={<Calendar />} />
+
+                        <Route path="/clients" element={<Clients />} />
+                        <Route path="/appointments" element={<Appointments />} />
+                        <Route path="/services" element={<Services />} />
+                        <Route path="/staff" element={<Staff />} />
+                        {/*<Route path="/reminders" element={<Reminders />} />*/}
+                        {/*<Route path="/finances" element={<Finances />} />*/}
+                        {/*<Route path="/reports" element={<Reports />} />*/}
                     </Routes>
                 </main>
             </div>
