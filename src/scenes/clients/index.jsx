@@ -19,6 +19,7 @@ const Clients = () => {
     const [openForm, setOpenForm] = useState(false);
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+    const [errorMessage, setErrorMessage] = useState( "")
 
     const fetchClients = async () => {
         try {
@@ -47,6 +48,7 @@ const Clients = () => {
     const handleFormSubmit = async (values, { resetForm }) => {
         try {
             const response = await createCustomer(values);
+            console.log("Client created", response);
             console.log("Client created successfully");
             resetForm();
             setOpenForm(false);
@@ -54,6 +56,7 @@ const Clients = () => {
 
         } catch (error) {
             console.error("Error creating client:", error);
+            alert(error.message);
         }
     };
     const columns = [
@@ -177,6 +180,11 @@ const Clients = () => {
                                     helperText={touched.startDate && errors.startDate}
                                 />
                             </Box>
+                            {errorMessage && (
+                                <Typography color="error" variant="body2" style={{ marginTop: "10px" }}>
+                                    {errorMessage}
+                                </Typography>
+                            )}
                             <Box display="flex" justifyContent="end" mt={3}>
                                 <Button
                                     variant="contained"

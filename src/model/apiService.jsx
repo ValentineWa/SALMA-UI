@@ -8,7 +8,9 @@ const fetchAPI = async (url, options) => {
         const response = await fetch(`${API_BASE_URL}${url}`, options);
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.status}`);
+            const errorData = await response.json();
+            const errorMessage = errorData.statusMessage || "An error occurred";
+            throw new Error(errorMessage);
         }
 
         return await response.json();
@@ -34,7 +36,7 @@ export const createCustomer = async (customerData) => {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==", // Your auth header
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
         },
         body: JSON.stringify(customerData),
     });

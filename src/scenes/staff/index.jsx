@@ -5,7 +5,8 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { Add as AddIcon } from "@mui/icons-material";
 import React, { useState, useEffect } from "react";
 import { getAllStaff, createStaff } from "../../model/apiService";
-
+import Header from "../../components/Header";
+import {DataGrid} from "@mui/x-data-grid";
 const Staff = () => {
     const isNonMobile = useMediaQuery("(min-width:600px)");
     const [staff, setStaff] = useState([]);
