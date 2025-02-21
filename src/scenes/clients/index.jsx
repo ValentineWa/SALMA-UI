@@ -180,7 +180,10 @@ const Clients = () => {
                         firstName: yup.string().required("Required"),
                         lastName: yup.string().required("Required"),
                         phoneNumber: yup
-                            .number()
+                            .string()
+                            .matches(/^(\+2547\d{8}|07\d{8})$/,
+                                "Phone number must be in +2547XXXXXXXX or 07XXXXXXXX format"
+                            )
                             .required("Required")
                             .typeError("Phone number must be a number"),
                         startDate: yup.date().required("Required"),
