@@ -1,0 +1,416 @@
+import {Box, Button, TextField, Typography, useTheme} from "@mui/material";
+import { Formik } from "formik";
+import * as yup from "yup";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { Add as AddIcon } from "@mui/icons-material";
+import React, { useState, useEffect } from "react";
+import { getAllCustomers, createCustomer } from "../../model/apiService";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import Header from "../../components/Header";
+import {DataGrid, GridCellEditStopReasons} from "@mui/x-data-grid";
+import {mockDataTeam} from "../../data/mockData";
+import {tokens} from "../../theme";
+import {MuiEvent} from "@mui/x-data-grid";
+import {GridCellEditStopParams} from "@mui/x-data-grid";
+
+
+const Clients = () => {
+    const isNonMobile = useMediaQuery("(min-width:600px)");
+    const [clients, setClients] = useState([]);
+    const [openForm, setOpenForm] = useState(false);
+    const theme = useTheme();
+    const colors = tokens(theme.palette.mode);
+    const [errorMessage, setErrorMessage] = useState( "")
+console.log("clien", clients)
+    const fetchClients = async () => {
+        try {
+            const resp = await getAllCustomers();
+            // const clientsWithId = resp.data.map((client, index) => ({
+            //     id: index, // Add an `id` field
+            //     name: client.firstName,
+            //     ...client,
+            // }));
+            const clientelle = resp.data;
+            console.log(resp);
+            console.log(resp.data);
+            console.log("with id", clientelle);
+            setClients(clientelle);
+            console.log("set it with id", clients);
+        } catch (error) {
+            console.error("Error fetching clients:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchClients(); // Fetch clients when the component loads
+    }, []);
+
+    useEffect(() => {
+        console.log("Clients state updated:", clients);
+    }, []);
+    const handleFormSubmit = async (values, { resetForm }) => {
+        try {
+            const response = await createCustomer(values);
+            console.log("Client created", response);
+            console.log("Client created successfully");
+            resetForm();
+            setOpenForm(false);
+            fetchClients();
+
+        } catch (error) {
+            console.error("Error creating client:", error);
+            alert(error.message);
+        }
+    };
+
+
+    const columns = [
+        {
+            field: "firstName",
+            headerName: "First Name",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            editable: true,
+        },
+        {
+            field: "lastName",
+            headerName: "Last Name",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            editable: true,
+        },
+        {
+            field: "phoneNumber",
+            headerName: "Phone Number",
+            flex: 1,
+            editable: true,
+        },
+        {
+            field: "startDate",
+            headerName: "Start Date",
+            flex: 1,
+            editable: true,
+        },
+    ];
+
+    const onEdit  =  ({
+        field, value
+                      }) => {
+
+
+        //submits to server
+        // field:"firstName"
+        //value: "peter"
+
+    }
+    return (
+        <Box>
+            <Typography variant="h4" mb={2}>
+                Client Management
+            </Typography>
+            <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={() => setOpenForm(true)}
+            >
+                Create Client
+            </Button>
+
+            {openForm && (
+                <Formik
+                    initialValues={{
+                        firstName: "",
+                        lastName: "",
+                        phoneNumber: "",
+                        startDate: "",
+                    }}
+                    validationSchema={yup.object().shape({
+                        firstName: yup.string().required("Required"),
+                        lastName: yup.string().required("Required"),
+                        phoneNumber: yup
+                            .number()
+                            .required("Required")
+                            .typeError("Phone number must be a number"),
+                        startDate: yup.date().required("Required"),
+                    })}
+                    onSubmit={handleFormSubmit}
+                >
+                    {({
+                          values,
+                          errors,
+                          touched,
+                          handleBlur,
+                          handleChange,
+                          handleSubmit,
+                      }) => (
+                        <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
+                            <Box
+                                display="grid"
+                                gap="20px"
+                                gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+                                sx={{
+                                    "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
+                                }}
+                            >
+                                <TextField
+                                    fullWidth
+                                    variant="filled"
+                                    label="First Name"
+                                    name="firstName"
+                                    value={values.firstName}
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    error={touched.firstName && !!errors.firstName}
+                                    helperText={touched.firstName && errors.firstName}
+                                />
+                                <TextField
+                                    fullWidth
+                                    variant="filled"
+                                    label="Last Name"
+                                    name="lastName"
+                                    value={values.lastName}
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    error={touched.lastName && !!errors.lastName}
+                                    helperText={touched.lastName && errors.lastName}
+                                />
+                                <TextField
+                                    fullWidth
+                                    variant="filled"
+                                    label="Phone Number"
+                                    name="phoneNumber"
+                                    value={values.phoneNumber}
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    error={touched.phoneNumber && !!errors.phoneNumber}
+                                    helperText={touched.phoneNumber && errors.phoneNumber}
+                                />
+                                <TextField
+                                    fullWidth
+                                    variant="filled"
+                                    label="Start Date"
+                                    name="startDate"
+                                    type="date"
+                                    InputLabelProps={{ shrink: true }}
+                                    value={values.startDate}
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    error={touched.startDate && !!errors.startDate}
+                                    helperText={touched.startDate && errors.startDate}
+                                />
+                            </Box>
+                            {errorMessage && (
+                                <Typography color="error" variant="body2" style={{ marginTop: "10px" }}>
+                                    {errorMessage}
+                                </Typography>
+                            )}
+                            <Box display="flex" justifyContent="end" mt={3}>
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    type="submit"
+                                >
+                                    Submit
+                                </Button>
+                            </Box>
+                        </form>
+                    )}
+                </Formik>
+            )}
+
+            <Box m="20px">
+                <Header title="Our Customers" subtitle="Managing All Our Customers Effectively." />
+                <Box
+                    m="40px 0 0 0"
+                    height="60vh"
+                    sx={{
+                        "& .MuiDataGrid-root": {
+                            border: "none",
+                        },
+                        "& .MuiDataGrid-cell": {
+                            borderBottom: "none",
+                        },
+                        "& .name-column--cell": {
+                        },
+                        "& .MuiDataGrid-columnHeaders": {
+                            borderBottom: "none",
+                        },
+                        "& .MuiDataGrid-virtualScroller": {
+                        },
+                        "& .MuiDataGrid-footerContainer": {
+                            borderTop: "none",
+                        },
+                        "& .MuiCheckbox-root": {
+                            color: `${colors.greenAccent[200]} !important`,
+                        },
+                    }}
+                >
+                    {/*<DataGrid checkboxSelection rows={clients} columns={columns}  />*/}
+                    <DataGrid
+                        rows={clients}
+                        columns={columns}
+
+                        onCellEditStop={(params, event) => {
+
+                            console.log("e", event);
+
+                            console.log("p", params);
+                            if (params.reason === GridCellEditStopReasons.cellFocusOut) {
+                                event.defaultMuiPrevented = true;
+
+                                //     call submit function
+
+                            }
+                        }}
+                    />
+                </Box>
+            </Box>
+        </Box>
+    );
+};
+export default Clients;
+
+
+import React, { useState, useEffect } from "react";
+import { Box, Button, Typography, useTheme } from "@mui/material";
+import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Close";
+import { Formik } from "formik";
+import * as yup from "yup";
+import { getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "../../model/apiService";
+
+const Clients = () => {
+    const theme = useTheme();
+    const [clients, setClients] = useState([]);
+    const [rowModesModel, setRowModesModel] = useState({});
+    const [openForm, setOpenForm] = useState(false);
+
+    const fetchClients = async () => {
+        try {
+            const response = await getAllCustomers();
+            setClients(response.data);
+        } catch (error) {
+            console.error("Error fetching clients:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchClients();
+    }, []);
+
+    const handleAddClick = () => {
+        const id = new Date().getTime();
+        setClients((prev) => [...prev, { id, firstName: "", lastName: "", phoneNumber: "", startDate: "", isNew: true }]);
+        console.log("Click:", setClients);
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.Edit, fieldToFocus: "firstName" } }));
+    };
+
+    const handleEditClick = (id) => () => {
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.Edit } }));
+    };
+
+    const handleDeleteClick = (id) => async () => {
+        try {
+            await deleteCustomer(id);
+            setClients((prev) => prev.filter((row) => row.id !== id));
+        } catch (error) {
+            console.error("Error deleting client:", error);
+        }
+    };
+    const handleSaveClick = (id, updatedRow) => async () => {
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.View } }));
+
+        try {
+            if (updatedRow.isNew) {
+
+                console.log("Created ooo client:", updatedRow);
+                await createCustomer(updatedRow);
+                setClients((prev) =>
+                    prev.map((row) => (row.id === id ? { ...row, isNew: false } : row))
+                );
+                console.log("Created new client:", updatedRow);
+            } else {
+                console.log("Updating client:", updatedRow);
+                await updateCustomer(id, updatedRow);
+            }
+            fetchClients(); // Fetch clients again to get the latest data
+        } catch (error) {
+            console.error("Error saving client:", error);
+        }
+    };
+    const processRowUpdate = (newRow) => {
+        const updatedRow = { ...newRow, isNew: false };
+        console.log("Processing row update:", newRow);
+        setClients((prev) => prev.map((row) => (row.id === newRow.id ? updatedRow : row)));
+        console.log("Processing new update:", newRow);
+        console.log("Processing upd update:", updatedRow);
+        return updatedRow; // Return the updated row directly
+    };
+    const handleCancelClick = (id) => () => {
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.View, ignoreModifications: true } }));
+        const editedRow = clients.find((row) => row.id === id);
+        if (editedRow.isNew) {
+            setClients((prev) => prev.filter((row) => row.id !== id));
+        }
+    };
+
+    const columns = [
+        { field: "firstName", headerName: "First Name", flex: 1, editable: true },
+        { field: "lastName", headerName: "Last Name", flex: 1, editable: true },
+        { field: "phoneNumber", headerName: "Phone Number", flex: 1, editable: true },
+        { field: "startDate", headerName: "Start Date", flex: 1, editable: true },
+        {
+            field: "actions",
+            type: "actions",
+            headerName: "Actions",
+            width: 150,
+            getActions: ({ id }) => {
+                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+                if (isInEditMode) {
+                    const updatedRow = clients.find((row) => row.id === id); // Get the updated row
+                    return [
+                        <GridActionsCellItem icon={<SaveIcon />} label="Save" onClick={handleSaveClick(id, updatedRow)} />,
+                        <GridActionsCellItem icon={<CancelIcon />} label="Cancel" onClick={handleCancelClick(id)} color="inherit" />,
+                    ];
+                }
+
+                return [
+                    <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={handleEditClick(id)} color="inherit" />,
+                    <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={handleDeleteClick(id)} color="inherit" />,
+                ];
+            },
+        },
+    ];
+
+    return (
+        <Box>
+            <Typography variant="h4" mb={2}>
+                Client Management
+            </Typography>
+            <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddClick}>
+                Create Client
+            </Button>
+
+            <Box mt={3} sx={{ height: 500, width: "100%" }}>
+                <DataGrid
+                    rows={clients}
+                    columns={columns}
+                    editMode="row"
+                    rowModesModel={rowModesModel}
+                    onRowModesModelChange={setRowModesModel}
+                    processRowUpdate={processRowUpdate}
+                />
+            </Box>
+        </Box>
+    );
+};
+
+export default Clients;

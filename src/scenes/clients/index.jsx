@@ -4,14 +4,15 @@ import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Add as AddIcon } from "@mui/icons-material";
 import React, { useState, useEffect } from "react";
-import { getAllCustomers, createCustomer } from "../../model/apiService";
-import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Close";
 import Header from "../../components/Header";
-import {DataGrid} from "@mui/x-data-grid";
-import {mockDataTeam} from "../../data/mockData";
 import {tokens} from "../../theme";
+
+import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
+import { getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "../../model/apiService";
 
 const Clients = () => {
     const isNonMobile = useMediaQuery("(min-width:600px)");
@@ -20,31 +21,25 @@ const Clients = () => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const [errorMessage, setErrorMessage] = useState( "")
-
+    const [rowModesModel, setRowModesModel] = useState({});
     const fetchClients = async () => {
         try {
             const resp = await getAllCustomers();
-            const clientsWithId = resp.data.map((client, index) => ({
-                id: index, // Add an `id` field
-                ...client,
-            }));
-            console.log(resp);
+            const clientelle = resp.data;
             console.log(resp.data);
-            console.log("with id", clientsWithId);
-            setClients(clientsWithId);
-            console.log("set it with id", clients);
+            setClients(clientelle);
         } catch (error) {
             console.error("Error fetching clients:", error);
         }
     };
 
     useEffect(() => {
-        fetchClients(); // Fetch clients when the component loads
+        fetchClients();
     }, []);
 
-    useEffect(() => {
-        console.log("Clients state updated:", clients);
-    }, [clients]);
+    const handleEditClick = (id) => () => {
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.Edit } }));
+    };
     const handleFormSubmit = async (values, { resetForm }) => {
         try {
             const response = await createCustomer(values);
@@ -59,28 +54,104 @@ const Clients = () => {
             alert(error.message);
         }
     };
+
+
+    const handleDeleteClick = (id) => async () => {
+        try {
+            await deleteCustomer(id);
+            setClients((prev) => prev.filter((row) => row.id !== id));
+        } catch (error) {
+            console.error("Error deleting client:", error);
+        }
+    };
+
+    const processRowUpdate = async (newRow, oldRow) => {
+        console.log("Processing row update:", newRow);
+
+        try {
+            await updateCustomer(newRow.id, newRow);
+            console.log("Update successful for:", newRow);
+
+            return newRow;
+        } catch (error) {
+            console.error("Error updating row:", error);
+            return oldRow;
+        }
+    };
+
+    const handleSaveClick = async (id, updatedRow) => {
+        console.log("Saving client:", updatedRow);
+
+        try {
+            const updatedData = await processRowUpdate(updatedRow);
+            console.log("Client updated successfully:", updatedData);
+
+            setRowModesModel((prev) => ({
+                ...prev,
+                [id]: { mode: GridRowModes.View },
+            }));
+
+            fetchClients();
+        } catch (error) {
+            console.error("Error saving client:", error);
+        }
+    };
+
+
+
+    const handleCancelClick = (id) => () => {
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.View, ignoreModifications: true } }));
+        const editedRow = clients.find((row) => row.id === id);
+        if (editedRow.isNew) {
+            setClients((prev) => prev.filter((row) => row.id !== id));
+        }
+    };
+
     const columns = [
+        { field: "firstName", headerName: "First Name", flex: 1, editable: true },
+        { field: "lastName", headerName: "Last Name", flex: 1, editable: true },
+        { field: "phoneNumber", headerName: "Phone Number", flex: 1, editable: true },
+        { field: "startDate", headerName: "Start Date", flex: 1, editable: true },
         {
-            field: "firstName",
-            headerName: "First Name",
-            flex: 1,
-            cellClassName: "name-column--cell",
-        },
-        {
-            field: "lastName",
-            headerName: "Last Name",
-            flex: 1,
-            cellClassName: "name-column--cell",
-        },
-        {
-            field: "phoneNumber",
-            headerName: "Phone Number",
-            flex: 1,
-        },
-        {
-            field: "startDate",
-            headerName: "Start Date",
-            flex: 1,
+            field: "actions",
+            type: "actions",
+            headerName: "Actions",
+            width: 150,
+            getActions: ({ id, row }) => {
+                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+                if (isInEditMode) {
+                    return [
+                        <GridActionsCellItem
+                            icon={<SaveIcon />}
+                            label="Save"
+                            onClick={() => handleSaveClick(id, row)}
+                        />,
+                        <GridActionsCellItem
+                            icon={<CancelIcon />}
+                            label="Cancel"
+                            onClick={handleCancelClick(id)}
+                            color="inherit"
+                        />,
+                    ];
+                }
+
+                return [
+                    <GridActionsCellItem
+                        icon={<EditIcon />}
+                        label="Edit"
+                        onClick={handleEditClick(id)}
+                        color="inherit"
+                    />,
+                    <GridActionsCellItem
+                        icon={<DeleteIcon />}
+                        label="Delete"
+                        onClick={handleDeleteClick(id)}
+                        color="inherit"
+                    />,
+                ];
+            }
+
         },
     ];
     return (
@@ -201,33 +272,23 @@ const Clients = () => {
 
             <Box m="20px">
                 <Header title="Our Customers" subtitle="Managing All Our Customers Effectively." />
-                <Box
-                    m="40px 0 0 0"
-                    height="60vh"
-                    sx={{
-                        "& .MuiDataGrid-root": {
-                            border: "none",
-                        },
-                        "& .MuiDataGrid-cell": {
-                            borderBottom: "none",
-                        },
-                        "& .name-column--cell": {
-                        },
-                        "& .MuiDataGrid-columnHeaders": {
-                            borderBottom: "none",
-                        },
-                        "& .MuiDataGrid-virtualScroller": {
-                        },
-                        "& .MuiDataGrid-footerContainer": {
-                            borderTop: "none",
-                        },
-                        "& .MuiCheckbox-root": {
-                            color: `${colors.greenAccent[200]} !important`,
-                        },
+
+
+            </Box>
+            <Box mt={3} sx={{ height: 500, width: "100%" }}>
+                <DataGrid
+                    rows={clients}
+                    columns={columns}
+                    editMode="row"
+                    rowModesModel={rowModesModel}
+                    onRowModesModelChange={setRowModesModel}
+                    processRowUpdate={processRowUpdate}
+                    onRowEditStop={(params, event) => {
+                        if (event) {
+                            event.defaultMuiPrevented = true;
+                        }
                     }}
-                >
-                    <DataGrid checkboxSelection rows={clients} columns={columns}  />
-                </Box>
+                />
             </Box>
         </Box>
     );

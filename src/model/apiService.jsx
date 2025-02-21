@@ -6,7 +6,7 @@ const API_BASE_URL = "http://localhost:8090/api/v1";
 const fetchAPI = async (url, options) => {
     try {
         const response = await fetch(`${API_BASE_URL}${url}`, options);
-
+console.log("Response:", response);
         if (!response.ok) {
             const errorData = await response.json();
             const errorMessage = errorData.statusMessage || "An error occurred";
@@ -42,43 +42,46 @@ export const createCustomer = async (customerData) => {
     });
 };
 
-//Staff
-export const getAllStaff = async () => {
-    return fetchAPI("/staff/getAllStaff", {
+export const deleteCustomer = async (id, customerData) => {
+    return fetchAPI(`/customers/deleteCustomer/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(customerData),
+    });
+};
+
+export const updateCustomer = async (id, customerData) => {
+    return fetchAPI(`/customers/updateCustomer/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(customerData),
+    });
+};
+
+//Appointments
+export const getAllAppointments = async () => {
+    return fetchAPI("/booking/getAllBookings", {
         method: "GET",
         headers: {
             "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
         },
     });
 };
-export const createStaff = async (staffData) => {
-    return fetchAPI("/staff/createNew", {
+export const createAppointments = async (bookingData) => {
+    return fetchAPI("/booking/createNew", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
         },
-        body: JSON.stringify(staffData),
+        body: JSON.stringify(bookingData),
     });
-};
-    //Appointments
-    export const getAllAppointments = async () => {
-        return fetchAPI("/booking/getAllBookings", {
-            method: "GET",
-            headers: {
-                "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
-            },
-        });
-    };
-    export const createAppointments = async (bookingData) => {
-        return fetchAPI("/booking/createNew", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
-            },
-            body: JSON.stringify(bookingData),
-        });
 };
 
 //Services
@@ -100,4 +103,3 @@ export const createServices = async (bookingData) => {
         body: JSON.stringify(bookingData),
     });
 };
-
