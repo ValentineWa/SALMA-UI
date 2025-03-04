@@ -125,3 +125,44 @@ export const deleteService = async (id, serviceData) => {
         body: JSON.stringify(serviceData),
     });
 };
+
+//Staff
+export const getAllStaff = async () => {
+    return fetchAPI("/staff/getAllStaff", {
+        method: "GET",
+        headers: {
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+    });
+};
+export const createStaff = async (staffData) => {
+    return fetchAPI("/staff/createNew", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(staffData),
+    });
+};
+
+export const updateStaff = async (id, staffData) => {
+    return fetchAPI(`/staff/updateStaff/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(staffData),
+    });
+};
+export const deleteStaff = async (id, staffData) => {
+    return fetchAPI(`/staff/deleteStaff/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(staffData),
+    });
+};
