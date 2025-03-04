@@ -73,6 +73,7 @@ export const getAllAppointments = async () => {
         },
     });
 };
+
 export const createAppointments = async (bookingData) => {
     return fetchAPI("/booking/createNew", {
         method: "POST",
@@ -93,13 +94,34 @@ export const getAllServices = async () => {
         },
     });
 };
-export const createServices = async (bookingData) => {
+export const createService = async (serviceData) => {
     return fetchAPI("/services/createNew", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
         },
-        body: JSON.stringify(bookingData),
+        body: JSON.stringify(serviceData),
+    });
+};
+
+export const updateService = async (id, serviceData) => {
+    return fetchAPI(`/services/updateService/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(serviceData),
+    });
+};
+export const deleteService = async (id, serviceData) => {
+    return fetchAPI(`/services/deleteService/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(serviceData),
     });
 };

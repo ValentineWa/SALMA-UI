@@ -1,44 +1,159 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {Box, Button, TextField, Typography, useTheme} from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Add as AddIcon } from "@mui/icons-material";
 import React, { useState, useEffect } from "react";
-import { getAllServices, createServices } from "../../model/apiService";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Close";
+import Header from "../../components/Header";
+import {tokens} from "../../theme";
+
+import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
+import { getAllServices, createService, updateService, deleteService } from "../../model/apiService";
 
 const Services = () => {
     const isNonMobile = useMediaQuery("(min-width:600px)");
     const [services, setServices] = useState([]);
     const [openForm, setOpenForm] = useState(false);
-
+    const theme = useTheme();
+    const colors = tokens(theme.palette.mode);
+    const [errorMessage, setErrorMessage] = useState( "")
+    const [rowModesModel, setRowModesModel] = useState({});
     const fetchServices = async () => {
         try {
-            const data = await getAllServices();
-            console.log(data);
-            setServices(data);
-
+            const resp = await getAllServices();
+            const serv = resp.data;
+            console.log(resp.data);
+            setServices(serv);
         } catch (error) {
             console.error("Error fetching Services:", error);
         }
     };
 
     useEffect(() => {
-        fetchServices(); // Fetch services when the component loads
+        fetchServices();
     }, []);
 
+    const handleEditClick = (id) => () => {
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.Edit } }));
+    };
     const handleFormSubmit = async (values, { resetForm }) => {
         try {
-            const response = await createServices(values);
-            console.log("Services created successfully");
+            const response = await createService(values);
+            console.log("Service created", response);
+            console.log("Service created successfully");
             resetForm();
             setOpenForm(false);
             fetchServices();
 
         } catch (error) {
-            console.error("Error creating services:", error);
+            console.error("Error creating service:", error);
+            alert(error.message);
         }
     };
 
+
+    const handleDeleteClick = (id) => async () => {
+        try {
+            await deleteService(id);
+            setServices((prev) => prev.filter((row) => row.id !== id));
+        } catch (error) {
+            console.error("Error deleting service:", error);
+        }
+    };
+
+    const processRowUpdate = async (newRow, oldRow) => {
+        console.log("Processing row update:", newRow);
+
+        try {
+            await updateService(newRow.id, newRow);
+            console.log("Update successful for:", newRow);
+
+            return newRow;
+        } catch (error) {
+            console.error("Error updating row:", error);
+            return oldRow;
+        }
+    };
+
+    const handleSaveClick = async (id, updatedRow) => {
+        console.log("Saving service:", updatedRow);
+
+        try {
+            const updatedData = await processRowUpdate(updatedRow);
+            console.log("Service updated successfully:", updatedData);
+
+            setRowModesModel((prev) => ({
+                ...prev,
+                [id]: { mode: GridRowModes.View },
+            }));
+
+            fetchServices();
+        } catch (error) {
+            console.error("Error saving service:", error);
+        }
+    };
+
+
+
+    const handleCancelClick = (id) => () => {
+        setRowModesModel((prev) => ({ ...prev, [id]: { mode: GridRowModes.View, ignoreModifications: true } }));
+        const editedRow = services.find((row) => row.id === id);
+        if (editedRow.isNew) {
+            setServices((prev) => prev.filter((row) => row.id !== id));
+        }
+    };
+
+    const columns = [
+        { field: "serviceName", headerName: "Service Name", flex: 1, editable: true },
+        { field: "duration", headerName: "Duration", flex: 1, editable: true },
+        { field: "price", headerName: "Price", flex: 1, editable: true },
+        { field: "description", headerName: "Description", flex: 1, editable: true },
+        {
+            field: "actions",
+            type: "actions",
+            headerName: "Actions",
+            width: 150,
+            getActions: ({ id, row }) => {
+                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+                if (isInEditMode) {
+                    return [
+                        <GridActionsCellItem
+                            icon={<SaveIcon />}
+                            label="Save"
+                            onClick={() => handleSaveClick(id, row)}
+                        />,
+                        <GridActionsCellItem
+                            icon={<CancelIcon />}
+                            label="Cancel"
+                            onClick={handleCancelClick(id)}
+                            color="inherit"
+                        />,
+                    ];
+                }
+
+                return [
+                    <GridActionsCellItem
+                        icon={<EditIcon />}
+                        label="Edit"
+                        onClick={handleEditClick(id)}
+                        color="inherit"
+                    />,
+                    <GridActionsCellItem
+                        icon={<DeleteIcon />}
+                        label="Delete"
+                        onClick={handleDeleteClick(id)}
+                        color="inherit"
+                    />,
+                ];
+            }
+
+        },
+    ];
     return (
         <Box>
             <Typography variant="h4" mb={2}>
@@ -63,8 +178,8 @@ const Services = () => {
                     }}
                     validationSchema={yup.object().shape({
                         serviceName: yup.string().required("Required"),
-                        duration: yup.number().required("Required"),
-                        price: yup.number().required("Required"),
+                        duration: yup.string().required("Required"),
+                        price: yup.string().required("Required"),
                         description: yup.string().required("Required"),
                     })}
                     onSubmit={handleFormSubmit}
@@ -124,7 +239,6 @@ const Services = () => {
                                     variant="filled"
                                     label="Description"
                                     name="description"
-                                    InputLabelProps={{ shrink: true }}
                                     value={values.description}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
@@ -132,6 +246,11 @@ const Services = () => {
                                     helperText={touched.description && errors.description}
                                 />
                             </Box>
+                            {errorMessage && (
+                                <Typography color="error" variant="body2" style={{ marginTop: "10px" }}>
+                                    {errorMessage}
+                                </Typography>
+                            )}
                             <Box display="flex" justifyContent="end" mt={3}>
                                 <Button
                                     variant="contained"
@@ -146,33 +265,27 @@ const Services = () => {
                 </Formik>
             )}
 
-            <Box mt={4}>
-                <Typography variant="h6">Services List</Typography>
-                <Box>
-                    {services.length > 0 ? (
-                        services.map((serv) => (
-                            <Box key={serv.id} mb={2} p={2} border="1px solid #ccc">
-                                <Typography>
-                                    <strong>Service Name:</strong> {serv.serviceName}
-                                </Typography>
-                                <Typography>
-                                    <strong>Duration:</strong> {serv.duration}
-                                </Typography>
-                                <Typography>
-                                    <strong>Price:</strong> {serv.price}
-                                </Typography>
-                                <Typography>
-                                    <strong>Description:</strong> {serv.description}
-                                </Typography>
-                            </Box>
-                        ))
-                    ) : (
-                        <Typography>No services found.</Typography>
-                    )}
-                </Box>
+            <Box m="20px">
+                <Header title="Our Services" subtitle="Managing All Our Services Effectively." />
+
+
+            </Box>
+            <Box mt={3} sx={{ height: 500, width: "100%" }}>
+                <DataGrid
+                    rows={services}
+                    columns={columns}
+                    editMode="row"
+                    rowModesModel={rowModesModel}
+                    onRowModesModelChange={setRowModesModel}
+                    processRowUpdate={processRowUpdate}
+                    onRowEditStop={(params, event) => {
+                        if (event) {
+                            event.defaultMuiPrevented = true;
+                        }
+                    }}
+                />
             </Box>
         </Box>
     );
 };
-
 export default Services;
