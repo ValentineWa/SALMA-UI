@@ -10,6 +10,8 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
 import Header from "../../components/Header";
 import {tokens} from "../../theme";
+import Autocomplete from "@mui/material/Autocomplete";
+import Chip from "@mui/material/Chip";
 
 import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
 import { getAllStaff, createStaff, updateStaff, deleteStaff } from "../../model/apiService";
@@ -42,6 +44,7 @@ const Staff = () => {
     };
     const handleFormSubmit = async (values, { resetForm }) => {
         try {
+            const payload = { ...values, services: Array.isArray(values.services) ? values.services : [values.services] };
             const response = await createStaff(values);
             console.log("Staff created", response);
             console.log("Staff created successfully");
@@ -83,7 +86,9 @@ const Staff = () => {
         console.log("Saving Staff:", updatedRow);
 
         try {
-            const updatedData = await processRowUpdate(updatedRow);
+            const updatedData = { ...updatedRow, services: Array.isArray(updatedRow.services) ? updatedRow.services : [updatedRow.services] };
+
+            // const updatedData = await processRowUpdate(updatedRow);
             console.log("Staff updated successfully:", updatedData);
 
             setRowModesModel((prev) => ({
@@ -113,10 +118,18 @@ const Staff = () => {
         { field: "idNumber", headerName: "ID Number", flex: 1, editable: true },
         { field: "phoneNumber", headerName: "Phone Number", flex: 1, editable: true },
         { field: "startDate", headerName: "Start Date", flex: 1, editable: true },
-        { field: "yearsOfExperience", headerName: "Years Of Experience", flex: 1, editable: true },
+        { field: "yearOfExperience", headerName: "Years Of Experience", flex: 1, editable: true },
         { field: "nationality", headerName: "Nationality", flex: 1, editable: true },
         { field: "physicalAddress", headerName: "Physical Address", flex: 1, editable: true },
-        { field: "serviceNames", headerName: "Expertise", flex: 1, editable: true },
+        { field: "services", headerName: "Expertise", flex: 1, editable: true, renderCell: (params) => {
+                // Check if serviceNames is an array or object
+                if (Array.isArray(params.value)) {
+                    return params.value.join(", "); // Convert array to string
+                } else if (typeof params.value === "object" && params.value !== null) {
+                    return JSON.stringify(params.value); // Convert object to JSON string
+                }
+                return params.value; // Fallback for other types
+            } },
         {
             field: "actions",
             type: "actions",
@@ -181,7 +194,7 @@ const Staff = () => {
                         idNumber: "",
                         phoneNumber: "",
                         startDate: "",
-                        yearsOfExperience: "",
+                        yearOfExperience: "",
                         nationality: "",
                         physicalAddress: "",
                     }}
@@ -191,9 +204,10 @@ const Staff = () => {
                         idNumber: yup.string().required("Required"),
                         phoneNumber: yup.string().required("Required"),
                         startDate: yup.string().required("Required"),
-                        yearsOfExperience: yup.string().required("Required"),
+                        yearOfExperience: yup.string().required("Required"),
                         nationality: yup.string().required("Required"),
                         physicalAddress: yup.string().required("Required"),
+                        services: yup.array().min(1, "At least one service is required"),
                     })}
                     onSubmit={handleFormSubmit}
                 >
@@ -203,7 +217,7 @@ const Staff = () => {
                           touched,
                           handleBlur,
                           handleChange,
-                          handleSubmit,
+                          handleSubmit,setFieldValue
                       }) => (
                         <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
                             <Box
@@ -273,12 +287,12 @@ const Staff = () => {
                                     fullWidth
                                     variant="filled"
                                     label="Years Of Experience"
-                                    name="yearsOfExperience"
-                                    value={values.yearsOfExperience}
+                                    name="yearOfExperience"
+                                    value={values.yearOfExperience}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
-                                    error={touched.yearsOfExperience && !!errors.yearsOfExperience}
-                                    helperText={touched.yearsOfExperience && errors.yearsOfExperience}
+                                    error={touched.yearOfExperience && !!errors.yearOfExperience}
+                                    helperText={touched.yearOfExperience && errors.yearOfExperience}
                                 />
                                 <TextField
                                     fullWidth
@@ -302,16 +316,17 @@ const Staff = () => {
                                     error={touched.physicalAddress && !!errors.physicalAddress}
                                     helperText={touched.physicalAddress && errors.physicalAddress}
                                 />
-                                <TextField
-                                    fullWidth
-                                    variant="filled"
-                                    label="Expertise"
-                                    name="serviceNames"
-                                    value={values.serviceNames}
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
-                                    error={touched.serviceNames && !!errors.serviceNames}
-                                    helperText={touched.serviceNames && errors.serviceNames}
+                                <Autocomplete
+                                    multiple
+                                    options={["Haircut", "Massage", "Nail Care", "Facial", "Makeup"]} // Replace with actual service options
+                                    value={values.services}
+                                    onChange={(event, newValue) => setFieldValue("services", newValue)}
+                                    renderTags={(value, getTagProps) =>
+                                        value.map((option, index) => (
+                                            <Chip key={option} label={option} {...getTagProps({ index })} />
+                                        ))
+                                    }
+                                    renderInput={(params) => <TextField {...params} label="Expertise" variant="filled" />}
                                 />
                             </Box>
                             {errorMessage && (
