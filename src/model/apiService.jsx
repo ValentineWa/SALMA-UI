@@ -1,19 +1,32 @@
 
-// apiService.js
-const API_BASE_URL = "http://localhost:8090/api/v1";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8090/api/v1";
 
-// Utility function for handling API requests
+if (typeof process !== "undefined" && process.env && process.env.NODE_ENV === "development") {
+    console.info("[SALMA-UI] Using API base URL:", API_BASE_URL);
+}
+
 const fetchAPI = async (url, options) => {
     try {
         const response = await fetch(`${API_BASE_URL}${url}`, options);
-console.log("Response:", response);
         if (!response.ok) {
-            const errorData = await response.json();
-            const errorMessage = errorData.statusMessage || "An error occurred";
+            let errorMessage = `Request failed with status ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.statusMessage || errorData.message || errorMessage;
+            } catch (_) {
+                try {
+                    const text = await response.text();
+                    if (text) errorMessage = text;
+                } catch (_) {}
+            }
             throw new Error(errorMessage);
         }
 
-        return await response.json();
+        try {
+            return await response.json();
+        } catch (_) {
+            return null;
+        }
     } catch (error) {
         console.error("API Error:", error);
         throw error;
@@ -21,6 +34,7 @@ console.log("Response:", response);
 };
 
 // API Calls
+
 //Customer
 export const getAllCustomers = async () => {
     return fetchAPI("/customers/getAllCustomers", {
@@ -30,7 +44,6 @@ export const getAllCustomers = async () => {
         },
     });
 };
-
 export const createCustomer = async (customerData) => {
     return fetchAPI("/customers/createNew", {
         method: "POST",
@@ -41,7 +54,6 @@ export const createCustomer = async (customerData) => {
         body: JSON.stringify(customerData),
     });
 };
-
 export const deleteCustomer = async (id, customerData) => {
     return fetchAPI(`/customers/deleteCustomer/${id}`, {
         method: "DELETE",
@@ -52,7 +64,6 @@ export const deleteCustomer = async (id, customerData) => {
         body: JSON.stringify(customerData),
     });
 };
-
 export const updateCustomer = async (id, customerData) => {
     return fetchAPI(`/customers/updateCustomer/${id}`, {
         method: "PUT",
@@ -73,7 +84,6 @@ export const getAllAppointments = async () => {
         },
     });
 };
-
 export const createAppointments = async (bookingData) => {
     return fetchAPI("/booking/createNew", {
         method: "POST",
@@ -82,6 +92,74 @@ export const createAppointments = async (bookingData) => {
             "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
         },
         body: JSON.stringify(bookingData),
+    });
+};
+export const triggerAppointmentPayment = async (id) => {
+    return fetchAPI(`/booking/triggerPayment/${id}`, {
+        method: "POST",
+        headers: {
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+    });
+};
+
+export const setAppointmentInProgress = async (id) => {
+    return fetchAPI(`/booking/appointments/${id}/inProgress`, {
+        method: "POST",
+        headers: {
+
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+    });
+};
+
+export const cancelAppointment = async (id) => {
+    return fetchAPI(`/booking/appointments/${id}/cancel`, {
+        method: "POST",
+        headers: {
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+    });
+};
+
+export const markAppointmentNoShow = async (id) => {
+    return fetchAPI(`/booking/appointments/${id}/noShow`, {
+        method: "POST",
+        headers: {
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+    });
+};
+
+export const completeAppointment = async (id, payload) => {
+    return fetchAPI(`/booking/appointments/${id}/completed`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(payload || {}),
+    });
+};
+
+export const updateAppointment = async (id, data) => {
+    return fetchAPI(`/booking/updateBookings/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(data || {}),
+    });
+};
+export const deleteAppointment = async (id, serviceData) => {
+    return fetchAPI(`/booking/deleteBookings/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+        body: JSON.stringify(serviceData),
     });
 };
 
@@ -104,7 +182,6 @@ export const createService = async (serviceData) => {
         body: JSON.stringify(serviceData),
     });
 };
-
 export const updateService = async (id, serviceData) => {
     return fetchAPI(`/services/updateService/${id}`, {
         method: "PUT",
@@ -145,7 +222,6 @@ export const createStaff = async (staffData) => {
         body: JSON.stringify(staffData),
     });
 };
-
 export const updateStaff = async (id, staffData) => {
     return fetchAPI(`/staff/updateStaff/${id}`, {
         method: "PUT",
