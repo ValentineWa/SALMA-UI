@@ -295,41 +295,92 @@ const Appointments = () => {
         {
             field: "fullName",
             headerName: "Full Name",
-            flex: 1,
-            valueGetter: (params) => {
-                const a = params?.row || {};
-                // Try both snake_case, camelCase, and common nesting
-                const first = readField(a, ["first_name", "firstName"]);
-                const last = readField(a, ["last_name", "lastName"]);
-                const combined = [first, last]
-                    .filter(Boolean)
-                    .join(" ");
-                return combined || a.fullName || "-";
+            flex: 1.2,
+            renderCell: (params) => {
+                const row = params.row;
+
+                const firstName = row.first_name || "";
+                const lastName = row.last_name || "";
+
+                return `${firstName} ${lastName}`.trim() || "-";
             },
         },
-        { field: "phone", headerName: "Phone", flex: 1, valueGetter: (p) => readField(p?.row, ["phone_number", "phoneNumber", "phone"]) || "-" },
-        { field: "staff", headerName: "Staff", flex: 1, valueGetter: (p) => readField(p?.row, ["staff_alias", "staffAlias", "staff"]) || "-" },
-        { field: "date", headerName: "Date", flex: 1, valueGetter: (p) => readField(p?.row, ["app_date", "appDate", "bookingDate", "appointmentDate"]) || "-" },
-        { field: "time", headerName: "Time", flex: 1, valueGetter: (p) => readField(p?.row, ["time"]) || "-" },
+
         {
-            field: "services",
+            field: "phone_number",
+            headerName: "Phone",
+            flex: 1,
+            renderCell: (params) => {
+                return params.row.phone_number || "-";
+            },
+        },
+
+        {
+            field: "staff_alias",
+            headerName: "Staff",
+            flex: 1,
+            renderCell: (params) => {
+                return params.row.staff_alias || "-";
+            },
+        },
+
+        {
+            field: "app_date",
+            headerName: "Date",
+            flex: 1,
+            renderCell: (params) => {
+                return params.row.app_date || "-";
+            },
+        },
+
+        {
+            field: "time",
+            headerName: "Time",
+            flex: 1,
+            renderCell: (params) => {
+                return params.row.time || "-";
+            },
+        },
+
+        {
+            field: "services_name",
             headerName: "Services",
             flex: 1.5,
-            valueGetter: (p) => normalizeServiceNames(p?.row),
+            renderCell: (params) => {
+                const services = params.row.services_name;
+
+                if (!Array.isArray(services) || services.length === 0) {
+                    return "-";
+                }
+
+                return services
+                    .map((service) => service.serviceName)
+                    .filter(Boolean)
+                    .join(", ");
+            },
         },
+
         {
             field: "status",
             headerName: "Status",
             flex: 1,
             renderCell: (params) => {
-                const row = params?.row || {};
+                const row = params.row;
                 const status = getStatus(row);
                 const up = (status || "").toUpperCase();
-                const color = up === "COMPLETED" ? "success"
-                    : up === "OPEN" ? "info"
-                        : up === "IN_PROGRESS" ? "warning"
-                            : up === "CANCELLED" ? "default"
-                                : up === "NO_SHOW" ? "error" : "info";
+
+                const color =
+                    up === "COMPLETED"
+                        ? "success"
+                        : up === "OPEN"
+                            ? "info"
+                            : up === "IN_PROGRESS"
+                                ? "warning"
+                                : up === "CANCELLED"
+                                    ? "default"
+                                    : up === "NO_SHOW"
+                                        ? "error"
+                                        : "info";
 
                 return (
                     <Chip
@@ -342,13 +393,17 @@ const Appointments = () => {
                 );
             },
         },
+
         {
             field: "editActions",
             type: "actions",
             headerName: "Edit",
             width: 120,
+
             getActions: ({ id, row }) => {
-                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+                const isInEditMode =
+                    rowModesModel[id]?.mode === GridRowModes.Edit;
+
                 if (isInEditMode) {
                     return [
                         <GridActionsCellItem
@@ -356,6 +411,7 @@ const Appointments = () => {
                             label="Save"
                             onClick={() => handleSaveClick(id, row)}
                         />,
+
                         <GridActionsCellItem
                             icon={<CancelIcon />}
                             label="Cancel"
@@ -364,38 +420,58 @@ const Appointments = () => {
                         />,
                     ];
                 }
+
                 return [
                     <GridActionsCellItem
                         icon={<EditIcon />}
                         label="Edit"
-                        onClick={handleEditClick(id)}
+                        onClick={() => handleEditClick(id)}
                         color="inherit"
                     />,
+
                     <GridActionsCellItem
                         icon={<DeleteIcon />}
                         label="Delete"
-                        onClick={handleDeleteClick(id)}
+                        onClick={() => handleDeleteClick(id)}
                         color="inherit"
                     />,
                 ];
-                // No explicit edit button; enter edit by double-clicking a row
-                // return [];
             },
         },
+
         {
             field: "actions",
             headerName: "Actions",
             flex: 1,
             sortable: false,
             filterable: false,
+
             renderCell: (params) => {
-                const row = params?.row;
-                if (!row) return null;
+                const row = params.row;
+
+                if (!row) {
+                    return null;
+                }
+
                 const id = getId(row);
                 const busy = String(actionBusyId) === String(id);
+
                 return (
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }} sx={{ width: "100%" }}>
-                        <Button variant="contained" color="secondary" size="small" disabled={busy} onClick={() => handleTriggerPayment(row)}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ width: "100%" }}
+                    >
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            disabled={busy}
+                            onClick={() =>
+                                handleTriggerPayment(row)
+                            }
+                        >
                             {busy ? "Processing…" : "Payment"}
                         </Button>
                     </Stack>
