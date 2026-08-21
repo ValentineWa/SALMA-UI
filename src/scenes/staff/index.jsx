@@ -45,7 +45,7 @@ const Staff = () => {
     const handleFormSubmit = async (values, { resetForm }) => {
         try {
             const payload = { ...values, services: Array.isArray(values.services) ? values.services : [values.services] };
-            const response = await createStaff(values);
+            const response = await createStaff(payload);
             console.log("Staff created", response);
             console.log("Staff created successfully");
             resetForm();
@@ -87,8 +87,7 @@ const Staff = () => {
 
         try {
             const updatedData = { ...updatedRow, services: Array.isArray(updatedRow.services) ? updatedRow.services : [updatedRow.services] };
-
-            // const updatedData = await processRowUpdate(updatedRow);
+            await updateStaff(id, updatedData);
             console.log("Staff updated successfully:", updatedData);
 
             setRowModesModel((prev) => ({

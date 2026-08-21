@@ -75,6 +75,18 @@ export const updateCustomer = async (id, customerData) => {
     });
 };
 
+// Dashboard
+export const getDashboardStats = async () => {
+    // Backend may expose different routes; start with a conventional one
+    // and keep auth consistent with other endpoints
+    return fetchAPI("/dashboard", {
+        method: "GET",
+        headers: {
+            "Authorization": "Basic Y2xpZW50OmNsaWVudC1wYXNzd29yZA==",
+        },
+    });
+};
+
 //Appointments
 export const getAllAppointments = async () => {
     return fetchAPI("/booking/getAllBookings", {

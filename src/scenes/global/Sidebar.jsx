@@ -62,7 +62,6 @@ const Sidebar = () => {
             }}
         >
             <ProSidebar collapsed={isCollapsed}>
-                console.log(colors);
                 <Menu iconShape="square">
                     {/* LOGO AND MENU ICON */}
                     <MenuItem
